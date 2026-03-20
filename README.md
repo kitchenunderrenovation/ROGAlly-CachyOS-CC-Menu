@@ -25,6 +25,8 @@ A native Linux overlay menu for the ASUS ROG Ally, inspired by the Windows ROG C
 
 The install script automatically installs build dependencies: `qt6-base`, `qt6-declarative`, `layer-shell-qt`, `cmake`, `polkit`, `grim`.
 
+**Note:** This app currently only works in **Desktop Mode** (KDE Plasma). Gaming Mode (Gamescope) is not supported yet as it uses a different overlay system.
+
 ## Install
 
 ```bash
