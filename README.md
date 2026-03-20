@@ -15,16 +15,21 @@ A native Linux overlay menu for the ASUS ROG Ally, inspired by the Windows ROG C
 
 ## Requirements
 
-- ASUS ROG Ally (RC71L) running Arch Linux or CachyOS
-- InputPlumber (for CC button remapping)
-- KDE Plasma / KWin (for Show Desktop, virtual keyboard)
-- PipeWire + WirePlumber (for volume control)
+- **ASUS ROG Ally (RC71L)** — hardware-specific (LED control, TDP, CC button)
+- **Arch Linux / CachyOS** — uses `pacman` for package management
+- **Wayland session** — KDE Plasma on Wayland (X11 is not supported)
+- **InputPlumber** — for CC button remapping (included with CachyOS Deckify)
+- **PipeWire + WirePlumber** — for volume control (`wpctl`)
+- **sudo access** — needed to install system files
+- **git** — to clone the repo
+
+The install script automatically installs build dependencies: `qt6-base`, `qt6-declarative`, `layer-shell-qt`, `cmake`, `polkit`, `grim`.
 
 ## Install
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/rog-ally-menu.git
-cd rog-ally-menu
+git clone https://github.com/kitchenunderrenovation/ROGAlly-CachyOS-CC-Menu.git
+cd ROGAlly-CachyOS-CC-Menu
 ./install.sh
 ```
 

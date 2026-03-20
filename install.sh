@@ -11,13 +11,54 @@ echo "  ROG Ally Command Center - Installer"
 echo "=========================================="
 echo ""
 
-# Check we're on an ROG Ally
+# Pre-flight checks
+FAIL=0
+
+# ROG Ally
 if ! grep -q "RC71L" /sys/class/dmi/id/board_name 2>/dev/null; then
     echo "WARNING: This does not appear to be an ROG Ally (RC71L)."
     read -p "Continue anyway? [y/N] " -n 1 -r
     echo
     [[ $REPLY =~ ^[Yy]$ ]] || exit 1
 fi
+
+# Arch/pacman
+if ! command -v pacman &>/dev/null; then
+    echo "ERROR: pacman not found. This installer requires Arch Linux or CachyOS."
+    FAIL=1
+fi
+
+# Wayland session
+if [ "$XDG_SESSION_TYPE" != "wayland" ]; then
+    echo "ERROR: Wayland session required. You appear to be running: ${XDG_SESSION_TYPE:-unknown}"
+    FAIL=1
+fi
+
+# InputPlumber
+if ! systemctl is-active inputplumber.service &>/dev/null; then
+    echo "WARNING: InputPlumber is not running. The CC button remap will not work."
+    echo "         Install InputPlumber or the CC button won't open this menu."
+fi
+
+# PipeWire/WirePlumber
+if ! command -v wpctl &>/dev/null; then
+    echo "WARNING: wpctl not found. Volume control will not work."
+    echo "         Install pipewire and wireplumber for volume support."
+fi
+
+# sudo
+if ! command -v sudo &>/dev/null; then
+    echo "ERROR: sudo is required to install system files."
+    FAIL=1
+fi
+
+if [ "$FAIL" -eq 1 ]; then
+    echo ""
+    echo "Fix the errors above and try again."
+    exit 1
+fi
+echo "All checks passed."
+echo ""
 
 # 1. Install dependencies
 echo "[1/7] Installing dependencies..."
