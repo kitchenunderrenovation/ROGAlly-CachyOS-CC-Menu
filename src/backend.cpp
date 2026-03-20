@@ -47,9 +47,13 @@ Backend::Backend(QObject *parent)
 
     m_pollTimer.setInterval(250);
     connect(&m_pollTimer, &QTimer::timeout, this, [this] {
-        // Fast path: only battery power (updates 4x/sec)
-        m_batteryWatts = readSysfsInt("/sys/class/power_supply/BAT0/power_now", 0) / 1000000.0;
+        // Fast path: battery + system power (updates 4x/sec)
         m_batteryPercent = readSysfsInt("/sys/class/power_supply/BAT0/capacity", 0);
+        // Use APU power (works on AC and battery), fall back to battery discharge
+        if (!m_amdgpu.isEmpty())
+            m_batteryWatts = readSysfsInt(m_amdgpu + "/power1_average", 0) / 1000000.0;
+        else
+            m_batteryWatts = readSysfsInt("/sys/class/power_supply/BAT0/power_now", 0) / 1000000.0;
         emit statsChanged();
 
         // Slow path: everything else (every 3 seconds)
@@ -145,7 +149,10 @@ void Backend::refreshAll()
     m_batteryPercent = readSysfsInt("/sys/class/power_supply/BAT0/capacity", 0);
     m_batteryCharging = readSysfs("/sys/class/power_supply/BAT0/status") == "Charging";
     m_acConnected = readSysfs("/sys/class/power_supply/AC0/online") == "1";
-    m_batteryWatts = readSysfsInt("/sys/class/power_supply/BAT0/power_now", 0) / 1000000.0;
+    if (!m_amdgpu.isEmpty())
+        m_batteryWatts = readSysfsInt(m_amdgpu + "/power1_average", 0) / 1000000.0;
+    else
+        m_batteryWatts = readSysfsInt("/sys/class/power_supply/BAT0/power_now", 0) / 1000000.0;
 
     // Wifi status
     m_wifiConnected = false;
