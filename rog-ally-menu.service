@@ -1,0 +1,14 @@
+[Unit]
+Description=ROG Ally Menu Overlay Daemon
+After=graphical-session.target
+
+[Service]
+Type=simple
+Environment=QT_QPA_PLATFORM=wayland
+Environment=QT_WAYLAND_SHELL_INTEGRATION=layer-shell
+ExecStart=/usr/bin/rog-ally-menu --daemon
+Restart=on-failure
+RestartSec=3
+
+[Install]
+WantedBy=default.target

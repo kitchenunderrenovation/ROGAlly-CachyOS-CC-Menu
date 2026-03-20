@@ -1,0 +1,7 @@
+build/
+pkg/
+*.pkg.tar.zst
+*.backup
+*.jpg
+*.png
+.claude/

@@ -1,0 +1,6 @@
+# Allow users in the 'input' group to read the ROG Ally Config device (button detection)
+SUBSYSTEM=="input", ATTRS{name}=="ASUS ROG Ally Config", MODE="0660", GROUP="input"
+
+# Allow current user to access the Ally hidraw device (LED color control)
+# Matches the HID device with driver asus_rog_ally
+SUBSYSTEM=="hidraw", KERNELS=="0003:0B05:1ABE.*", MODE="0666"

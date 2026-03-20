@@ -1,0 +1,79 @@
+#!/bin/bash
+# Helper script for privileged sysfs writes.
+# Authorized via polkit to run without password prompts.
+
+ARMOURY="/sys/class/firmware-attributes/asus-armoury/attributes"
+PROFILE="/sys/firmware/acpi/platform_profile"
+FANCURVE=""
+
+# Find asus_custom_fan_curve hwmon
+for d in /sys/class/hwmon/hwmon*/name; do
+    if [ "$(cat "$d" 2>/dev/null)" = "asus_custom_fan_curve" ]; then
+        FANCURVE="$(dirname "$d")"
+        break
+    fi
+done
+
+case "$1" in
+    set-profile)
+        echo "$2" > "$PROFILE" ;;
+    set-tdp-spl)
+        echo "$2" > "$ARMOURY/ppt_pl1_spl/current_value" ;;
+    set-tdp-sppt)
+        echo "$2" > "$ARMOURY/ppt_pl2_sppt/current_value" ;;
+    set-tdp-fppt)
+        echo "$2" > "$ARMOURY/ppt_pl3_fppt/current_value" ;;
+    set-charge-limit)
+        echo "$2" > "$ARMOURY/charge_mode/current_value" ;;
+    set-fan-curve)
+        echo "$2" > "$3" ;;
+    set-fan-preset)
+        # $2 = fan (1=cpu, 2=gpu), $3-$18 = temp1 pwm1 temp2 pwm2 ... temp8 pwm8
+        [ -z "$FANCURVE" ] && exit 1
+        fan="$2"; shift 2
+        for i in 1 2 3 4 5 6 7 8; do
+            echo "$1" > "$FANCURVE/pwm${fan}_auto_point${i}_temp" 2>/dev/null
+            echo "$2" > "$FANCURVE/pwm${fan}_auto_point${i}_pwm" 2>/dev/null
+            shift 2
+        done
+        # Enable custom curve
+        echo "2" > "$FANCURVE/pwm${fan}_enable" 2>/dev/null
+        ;;
+    set-fan-fullspeed)
+        # CPU fan: full speed via main asus hwmon
+        for d in /sys/class/hwmon/hwmon*/name; do
+            if [ "$(cat "$d" 2>/dev/null)" = "asus" ]; then
+                echo "0" > "$(dirname "$d")/pwm1_enable" 2>/dev/null
+                break
+            fi
+        done
+        # GPU fan: max out custom curve (pwm_enable=0 not supported)
+        [ -n "$FANCURVE" ] && for i in 1 2 3 4 5 6 7 8; do
+            echo "20" > "$FANCURVE/pwm2_auto_point${i}_temp" 2>/dev/null
+            echo "254" > "$FANCURVE/pwm2_auto_point${i}_pwm" 2>/dev/null
+        done
+        ;;
+    set-fan-auto)
+        for d in /sys/class/hwmon/hwmon*/name; do
+            if [ "$(cat "$d" 2>/dev/null)" = "asus" ]; then
+                echo "2" > "$(dirname "$d")/pwm1_enable" 2>/dev/null
+                break
+            fi
+        done
+        ;;
+    fix-hidraw)
+        for dev in /sys/class/leds/ally:rgb:joystick_rings/device/hidraw/hidraw*; do
+            devname=$(basename "$dev")
+            chmod 0666 "/dev/$devname" 2>/dev/null
+        done
+        # Also fix ROG Ally Config input device permissions
+        for dev in /sys/class/input/event*/device/name; do
+            if [ "$(cat "$dev" 2>/dev/null)" = "ASUS ROG Ally Config" ]; then
+                evdev="/dev/input/$(basename "$(dirname "$(dirname "$dev")")")"
+                chmod 0666 "$evdev" 2>/dev/null
+            fi
+        done
+        ;;
+    *)
+        echo "Unknown command: $1" >&2; exit 1 ;;
+esac
